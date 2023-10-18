@@ -1,0 +1,140 @@
+syntax = "proto3";
+package yimoko.api;
+import "errors/errors.proto";
+
+option go_package = "github.com/ickeep/yimoko-go/api;api";
+option java_package = "com.github.yimoko.api";
+option objc_class_prefix = "YimokoAPI";
+
+enum ErrorReason {
+  option (errors.default_code) = 500;
+  BAD_REQUEST = 0 [ (errors.code) = 400 ];
+
+  // 微信 api 出错
+  WE_CHAT_API_FAILED = 300 [ (errors.code) = 500 ];
+
+  // HTTP 响应代码
+
+  // 1、语义有误，当前请求无法被服务器理解。除非进行修改，否则客户端不应该重复提交这个请求。
+  // 2、请求参数有误。
+
+  // 当前请求需要用户验证。
+  UNAUTHORIZED = 1 [ (errors.code) = 401 ];
+
+  // 此响应码保留以便将来使用，创造此响应码的最初目的是用于数字支付系统，然而现在并未使用
+  PAYMENT_REQUIRED = 2 [ (errors.code) = 402 ];
+
+  // 服务器已经理解请求，但是拒绝执行它。
+  FORBIDDEN = 3 [ (errors.code) = 403 ];
+
+  // 请求失败，请求所希望得到的资源未被在服务器上发现。
+  NOT_FOUND = 4 [ (errors.code) = 404 ];
+
+  // 请求行中指定的请求方法不能被用于请求相应的资源。
+  METHOD_NOT_ALLOWED = 5 [ (errors.code) = 405 ];
+
+  // 请求的资源的内容特性无法满足请求头中的条件，因而无法生成响应实体。
+  NOT_ACCEPTABLE = 6 [ (errors.code) = 406 ];
+
+  // 与401响应类似，只不过客户端必须在代理服务器上进行身份验证。
+  PROXY_AUTHENTICATION_EQUIRED = 7 [ (errors.code) = 407 ];
+
+  // 请求超时。客户端没有在服务器预备等待的时间内完成一个请求的发送。客户端可以随时再次提交这一请求而无需进行任何更改。
+  REQUEST_TIMEOUT = 8 [ (errors.code) = 408 ];
+
+  // 由于和被请求的资源的当前状态之间存在冲突，请求无法完成。这个代码只允许用在这样的情况下才能被使用：用户被认为能够解决冲突，并且会重新提交新的请求。该响应应当包含足够的信息以便用户发现冲突的源头。
+  CONFLICT = 9 [ (errors.code) = 409 ];
+
+  // 被请求的资源在服务器上已经不再可用，而且没有任何已知的转发地址。这样的状况应当被认为是永久性的。如果可能，拥有链接编辑功能的客户端应当在获得用户许可后删除所有指向这个地址的引用。
+  GONE = 10 [ (errors.code) = 410 ];
+
+  // 服务器拒绝在没有定义 Content-Length 头的情况下接受请求。
+  LENGTH_REQUIRED = 11 [ (errors.code) = 411 ];
+
+  // 服务器在验证在请求的头字段中给出先决条件时，没能满足其中的一个或多个。这个状态码允许客户端在获取资源时在请求的元信息（请求头字段数据）中设置先决条件，以此避免该请求方法被应用到其希望的内容以外的资源上。
+  PRECONDITION_FAILED = 12 [ (errors.code) = 412 ];
+
+  // 服务器拒绝处理当前请求，因为该请求提交的实体数据大小超过了服务器愿意或者能够处理的范围。
+  PAYLOAD_TOO_LARGE = 13 [ (errors.code) = 413 ];
+
+  // 请求的URI长度超过了服务器能够解释的长度，因此服务器拒绝对该请求提供服务。
+  URI_TOO_LONG = 14 [ (errors.code) = 414 ];
+
+  // 对于当前请求的方法和所请求的资源，请求中提交的实体并不是服务器中所支持的格式，因此请求被拒绝。
+  UNSUPPORTED_MEDIA_TYPE = 15 [ (errors.code) = 415 ];
+
+  // 如果请求中包含了 Range
+  // 请求头，并且Range中指定的任何数据范围都与当前资源的可用范围不重合，同时请求中又没有定义
+  // If-Range 请求头，那么服务器就应当返回416状态码。
+  RANGE_NOT_SATISFIABLE = 16 [ (errors.code) = 416 ];
+
+  // 此响应代码意味着服务器无法满足 EXPECT 请求标头字段指示的期望值。
+  EXPECTATION_FAILED = 17 [ (errors.code) = 417 ];
+
+  // 服务器拒绝尝试用 “茶壶冲泡咖啡”。
+  IM_A_TEAPOT = 18 [ (errors.code) = 418 ];
+
+  // 该请求针对的是无法产生响应的服务器这可以由服务器发送，该服务器未配置为针对包含在请求URI中的方案和权限的组合产生响应
+  MISDIRECTED_REQUEST = 21 [ (errors.code) = 421 ];
+
+  // 请求格式良好，但由于语义错误而无法遵循。
+  UNPROCESSABLE_ENTITY = 42 [ (errors.code) = 422 ];
+
+  // 正在访问的资源被锁定。
+  LOCKED = 23 [ (errors.code) = 423 ];
+
+  // 由于先前的请求失败，所以此次请求失败。
+  FAILED_DEPENDENCY = 24 [ (errors.code) = 424 ];
+
+  // 服务器不愿意冒着风险去处理可能重播的请求。
+  Too_Early = 25 [ (errors.code) = 425 ];
+
+  // 服务器拒绝使用当前协议执行请求
+  UPGRADE_REQUIRED = 26 [ (errors.code) = 426 ];
+
+  // 原始服务器要求该请求是有条件的。
+  // 旨在防止“丢失更新”问题，即客户端获取资源状态，修改该状态并将其返回服务器，同时第三方修改服务器上的状态，从而导致冲突。
+  PRECONDITION_REQUIRED = 28 [ (errors.code) = 428 ];
+
+  // 用户在给定的时间内发送了太多请求（“限制请求速率”）。
+  TOO_MANY_REQUESTS = 29 [ (errors.code) = 429 ];
+
+  // 服务器不愿意处理请求，因为它的 请求头字段太大
+  REQUEST_HEADER_FIELDS_TOO_LARGE = 31 [ (errors.code) = 431 ];
+
+  // 用户请求非法资源，例如：由政府审查的网页。
+  UNAVAILABLE_FOR_LEGAL_REASONS = 51 [ (errors.code) = 451 ];
+
+  // 服务器遇到了不知道如何处理的情况
+  INTERNAL_SERVER_ERROR = 100 [ (errors.code) = 500 ];
+
+  // 此请求方法不被服务器支持且无法被处理。只有GET和HEAD是要求服务器支持的，它们必定不会返回此错误代码
+  NOT_IMPLEMENTED = 101 [ (errors.code) = 501 ];
+
+  // 此错误响应表明服务器作为网关需要得到一个处理这个请求的响应，但是得到一个错误的响应
+  BAD_GATEWAY = 102 [ (errors.code) = 502 ];
+
+  // 服务器没有准备好处理请求。 常见原因是服务器因维护或重载而停机。
+  SERVICE_UNAVAILABLE = 103 [ (errors.code) = 503 ];
+
+  // 当服务器作为网关，不能及时得到响应时返回此错误代码。
+  GATEWAY_TIMEOUT = 104 [ (errors.code) = 504 ];
+
+  // 服务器不支持请求中所使用的HTTP协议版本。
+  HTTP_VERSION_NOT_SUPPORTED = 105 [ (errors.code) = 505 ];
+
+  // 服务器有一个内部配置错误：对请求的透明内容协商导致循环引用
+  VARIANT_ALSO_NEGOTIATES = 106 [ (errors.code) = 506 ];
+
+  // 服务器有内部配置错误：所选的变体资源被配置为参与透明内容协商本身，因此不是协商过程中的适当端点。
+  INSUFFICIENT_STORAGE = 107 [ (errors.code) = 507 ];
+
+  // 服务器在处理请求时检测到无限循环
+  LOOP_DETECTED = 108 [ (errors.code) = 508 ];
+
+  // 客户端需要对请求进一步扩展，服务器才能实现它。服务器会回复客户端发出扩展请求所需的所有信息。
+  NOT_EXTENDED = 110 [ (errors.code) = 510 ];
+
+  // 状态码指示客户端需要进行身份验证才能获得网络访问权限。
+  NETWORK_AUTHENTICATION_REQUIRED = 111 [ (errors.code) = 511 ];
+}

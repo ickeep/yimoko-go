@@ -14,3 +14,11 @@ proto:
 				 --go-errors_out=paths=source_relative:. \
  	       --validate_out=paths=source_relative,lang=go:. \
 	       $(API_PROTO_FILES)
+
+.PHONY: config
+# generate internal proto
+config:
+	protoc --proto_path=. \
+				--proto_path=./third_party \
+				--go_out=paths=source_relative:. \
+				${CONFIG_PROTO_FILES}

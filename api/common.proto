@@ -12,11 +12,11 @@ message StrID { string id = 1 [ (validate.rules).string = {min_len : 8} ]; }
 
 message NumID { int32 id = 1 [ (validate.rules).int32 = {gte : 1} ]; }
 
-message StrIDs {
+message StrIDIn {
   repeated string ids = 1 [ (validate.rules).repeated = {min_items : 1} ];
 }
 
-message NumIDs {
+message NumIDIn {
   repeated int32 ids = 1 [ (validate.rules).repeated = {min_items : 1} ];
 }
 

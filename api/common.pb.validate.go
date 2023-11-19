@@ -253,21 +253,21 @@ var _ interface {
 	ErrorName() string
 } = NumIDValidationError{}
 
-// Validate checks the field values on StrIDs with the rules defined in the
+// Validate checks the field values on StrIDIn with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *StrIDs) Validate() error {
+func (m *StrIDIn) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on StrIDs with the rules defined in the
+// ValidateAll checks the field values on StrIDIn with the rules defined in the
 // proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in StrIDsMultiError, or nil if none found.
-func (m *StrIDs) ValidateAll() error {
+// a list of violation errors wrapped in StrIDInMultiError, or nil if none found.
+func (m *StrIDIn) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *StrIDs) validate(all bool) error {
+func (m *StrIDIn) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -275,7 +275,7 @@ func (m *StrIDs) validate(all bool) error {
 	var errors []error
 
 	if len(m.GetIds()) < 1 {
-		err := StrIDsValidationError{
+		err := StrIDInValidationError{
 			field:  "Ids",
 			reason: "value must contain at least 1 item(s)",
 		}
@@ -286,18 +286,18 @@ func (m *StrIDs) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return StrIDsMultiError(errors)
+		return StrIDInMultiError(errors)
 	}
 
 	return nil
 }
 
-// StrIDsMultiError is an error wrapping multiple validation errors returned by
-// StrIDs.ValidateAll() if the designated constraints aren't met.
-type StrIDsMultiError []error
+// StrIDInMultiError is an error wrapping multiple validation errors returned
+// by StrIDIn.ValidateAll() if the designated constraints aren't met.
+type StrIDInMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m StrIDsMultiError) Error() string {
+func (m StrIDInMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -306,11 +306,11 @@ func (m StrIDsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m StrIDsMultiError) AllErrors() []error { return m }
+func (m StrIDInMultiError) AllErrors() []error { return m }
 
-// StrIDsValidationError is the validation error returned by StrIDs.Validate if
-// the designated constraints aren't met.
-type StrIDsValidationError struct {
+// StrIDInValidationError is the validation error returned by StrIDIn.Validate
+// if the designated constraints aren't met.
+type StrIDInValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -318,22 +318,22 @@ type StrIDsValidationError struct {
 }
 
 // Field function returns field value.
-func (e StrIDsValidationError) Field() string { return e.field }
+func (e StrIDInValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e StrIDsValidationError) Reason() string { return e.reason }
+func (e StrIDInValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e StrIDsValidationError) Cause() error { return e.cause }
+func (e StrIDInValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e StrIDsValidationError) Key() bool { return e.key }
+func (e StrIDInValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e StrIDsValidationError) ErrorName() string { return "StrIDsValidationError" }
+func (e StrIDInValidationError) ErrorName() string { return "StrIDInValidationError" }
 
 // Error satisfies the builtin error interface
-func (e StrIDsValidationError) Error() string {
+func (e StrIDInValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -345,14 +345,14 @@ func (e StrIDsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sStrIDs.%s: %s%s",
+		"invalid %sStrIDIn.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = StrIDsValidationError{}
+var _ error = StrIDInValidationError{}
 
 var _ interface {
 	Field() string
@@ -360,23 +360,23 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = StrIDsValidationError{}
+} = StrIDInValidationError{}
 
-// Validate checks the field values on NumIDs with the rules defined in the
+// Validate checks the field values on NumIDIn with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *NumIDs) Validate() error {
+func (m *NumIDIn) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on NumIDs with the rules defined in the
+// ValidateAll checks the field values on NumIDIn with the rules defined in the
 // proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in NumIDsMultiError, or nil if none found.
-func (m *NumIDs) ValidateAll() error {
+// a list of violation errors wrapped in NumIDInMultiError, or nil if none found.
+func (m *NumIDIn) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *NumIDs) validate(all bool) error {
+func (m *NumIDIn) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -384,7 +384,7 @@ func (m *NumIDs) validate(all bool) error {
 	var errors []error
 
 	if len(m.GetIds()) < 1 {
-		err := NumIDsValidationError{
+		err := NumIDInValidationError{
 			field:  "Ids",
 			reason: "value must contain at least 1 item(s)",
 		}
@@ -395,18 +395,18 @@ func (m *NumIDs) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return NumIDsMultiError(errors)
+		return NumIDInMultiError(errors)
 	}
 
 	return nil
 }
 
-// NumIDsMultiError is an error wrapping multiple validation errors returned by
-// NumIDs.ValidateAll() if the designated constraints aren't met.
-type NumIDsMultiError []error
+// NumIDInMultiError is an error wrapping multiple validation errors returned
+// by NumIDIn.ValidateAll() if the designated constraints aren't met.
+type NumIDInMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m NumIDsMultiError) Error() string {
+func (m NumIDInMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -415,11 +415,11 @@ func (m NumIDsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m NumIDsMultiError) AllErrors() []error { return m }
+func (m NumIDInMultiError) AllErrors() []error { return m }
 
-// NumIDsValidationError is the validation error returned by NumIDs.Validate if
-// the designated constraints aren't met.
-type NumIDsValidationError struct {
+// NumIDInValidationError is the validation error returned by NumIDIn.Validate
+// if the designated constraints aren't met.
+type NumIDInValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -427,22 +427,22 @@ type NumIDsValidationError struct {
 }
 
 // Field function returns field value.
-func (e NumIDsValidationError) Field() string { return e.field }
+func (e NumIDInValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e NumIDsValidationError) Reason() string { return e.reason }
+func (e NumIDInValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e NumIDsValidationError) Cause() error { return e.cause }
+func (e NumIDInValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e NumIDsValidationError) Key() bool { return e.key }
+func (e NumIDInValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e NumIDsValidationError) ErrorName() string { return "NumIDsValidationError" }
+func (e NumIDInValidationError) ErrorName() string { return "NumIDInValidationError" }
 
 // Error satisfies the builtin error interface
-func (e NumIDsValidationError) Error() string {
+func (e NumIDInValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -454,14 +454,14 @@ func (e NumIDsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sNumIDs.%s: %s%s",
+		"invalid %sNumIDIn.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = NumIDsValidationError{}
+var _ error = NumIDInValidationError{}
 
 var _ interface {
 	Field() string
@@ -469,7 +469,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = NumIDsValidationError{}
+} = NumIDInValidationError{}
 
 // Validate checks the field values on Num with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
@@ -871,21 +871,22 @@ var _ interface {
 	ErrorName() string
 } = StrMapValidationError{}
 
-// Validate checks the field values on Sort with the rules defined in the proto
-// definition for this message. If any rules are violated, the first error
-// encountered is returned, or nil if there are no violations.
-func (m *Sort) Validate() error {
+// Validate checks the field values on SortOrder with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SortOrder) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Sort with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in SortMultiError, or nil if none found.
-func (m *Sort) ValidateAll() error {
+// ValidateAll checks the field values on SortOrder with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SortOrderMultiError, or nil
+// if none found.
+func (m *SortOrder) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Sort) validate(all bool) error {
+func (m *SortOrder) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -897,18 +898,18 @@ func (m *Sort) validate(all bool) error {
 	// no validation rules for Order
 
 	if len(errors) > 0 {
-		return SortMultiError(errors)
+		return SortOrderMultiError(errors)
 	}
 
 	return nil
 }
 
-// SortMultiError is an error wrapping multiple validation errors returned by
-// Sort.ValidateAll() if the designated constraints aren't met.
-type SortMultiError []error
+// SortOrderMultiError is an error wrapping multiple validation errors returned
+// by SortOrder.ValidateAll() if the designated constraints aren't met.
+type SortOrderMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m SortMultiError) Error() string {
+func (m SortOrderMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -917,11 +918,11 @@ func (m SortMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m SortMultiError) AllErrors() []error { return m }
+func (m SortOrderMultiError) AllErrors() []error { return m }
 
-// SortValidationError is the validation error returned by Sort.Validate if the
-// designated constraints aren't met.
-type SortValidationError struct {
+// SortOrderValidationError is the validation error returned by
+// SortOrder.Validate if the designated constraints aren't met.
+type SortOrderValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -929,22 +930,22 @@ type SortValidationError struct {
 }
 
 // Field function returns field value.
-func (e SortValidationError) Field() string { return e.field }
+func (e SortOrderValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e SortValidationError) Reason() string { return e.reason }
+func (e SortOrderValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e SortValidationError) Cause() error { return e.cause }
+func (e SortOrderValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e SortValidationError) Key() bool { return e.key }
+func (e SortOrderValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e SortValidationError) ErrorName() string { return "SortValidationError" }
+func (e SortOrderValidationError) ErrorName() string { return "SortOrderValidationError" }
 
 // Error satisfies the builtin error interface
-func (e SortValidationError) Error() string {
+func (e SortOrderValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -956,14 +957,14 @@ func (e SortValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sSort.%s: %s%s",
+		"invalid %sSortOrder.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = SortValidationError{}
+var _ error = SortOrderValidationError{}
 
 var _ interface {
 	Field() string
@@ -971,4 +972,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = SortValidationError{}
+} = SortOrderValidationError{}

@@ -30,7 +30,7 @@ message Str { string value = 1; }
 message StrMap { map<string, string> value = 1; }
 
 // 查询排序
-message Sort {
+message SortOrder {
   string field = 1;
   string order = 2;
 }

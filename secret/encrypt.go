@@ -1,3 +1,4 @@
+// Package secret encrypt.go
 package secret
 
 import (
@@ -34,7 +35,7 @@ func Decrypt(str string, secret string) (string, error) {
 	return string(dst), nil
 }
 
-// 不可逆加密
+// IrreversibleEncrypt 不可逆加密
 func IrreversibleEncrypt(str string, secret string) (string, string) {
 	nonce := utils.RandomStr(8)
 	return nonce, irreversible(str, nonce, secret)
@@ -48,6 +49,7 @@ func irreversible(str string, nonce string, secret string) string {
 	return hex.EncodeToString(m.Sum(nil))
 }
 
+// VerifyIrreversible 验证不可逆加密
 func VerifyIrreversible(cipher string, str string, nonce string, secret string) bool {
 	if cipher == "" || str == "" || nonce == "" || secret == "" {
 		return false

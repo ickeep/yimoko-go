@@ -1,3 +1,4 @@
+// Package utils mask.go
 package utils
 
 import (
@@ -5,21 +6,23 @@ import (
 	"strings"
 )
 
+// MaskType 敏感数据类型
 type MaskType string
 
 const (
-	// 用于手机号
+	// MaskTypePhone 用于手机号
 	MaskTypePhone MaskType = "phone"
-	// 用于邮箱账号
+	// MaskTypeEmail 用于邮箱账号
 	MaskTypeEmail MaskType = "email"
-	// 用于身份证号
+	// MaskTypeIDCard 用于身份证号
 	MaskTypeIDCard MaskType = "idCard"
-	// 用于银行卡号
+	// MaskTypeBankCard 用于银行卡号
 	MaskTypeBankCard MaskType = "bankCard"
-	// 用于其他敏感数据
+	// MaskTypeOther 用于其他敏感数据
 	MaskTypeOther MaskType = "other"
 )
 
+// Mask 敏感数据加星
 func Mask(str string, maskType MaskType) string {
 	switch maskType {
 	case MaskTypePhone:
@@ -41,15 +44,16 @@ func MaskPhone(phone string) string {
 	if strLen <= 4 {
 		return strings.Repeat("*", strLen)
 	}
+	mastStr := "****"
 	if strLen <= 11 {
 		showLen := strLen - 4
 		// 前后一半后优先 向上取整
 		endLen := int(math.Ceil(float64(showLen) / 2))
 		startLen := showLen - endLen
 		if startLen < 1 {
-			return "****" + phone[strLen-endLen:]
+			return mastStr + phone[strLen-endLen:]
 		}
-		return phone[:startLen] + "****" + phone[strLen-endLen:]
+		return phone[:startLen] + mastStr + phone[strLen-endLen:]
 	}
 	return phone[:3] + strings.Repeat("*", strLen-7) + phone[strLen-4:]
 }
@@ -72,6 +76,7 @@ func MaskMail(mail string) string {
 }
 
 // TODO 待测定与完善
+
 // MaskIDCard 身份证号加星
 func MaskIDCard(idCard string) string {
 	strLen := len(idCard)
@@ -82,6 +87,7 @@ func MaskIDCard(idCard string) string {
 }
 
 // TODO 待测定与完善
+
 // MaskBankCard 银行卡号加星
 func MaskBankCard(bankCard string) string {
 	strLen := len(bankCard)
@@ -92,6 +98,7 @@ func MaskBankCard(bankCard string) string {
 }
 
 // TODO 待测定与完善
+
 // MaskOther 其他敏感数据加星
 func MaskOther(str string) string {
 	strLen := len(str)

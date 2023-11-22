@@ -1,3 +1,4 @@
+// Package utils string.go
 package utils
 
 import (
@@ -33,7 +34,7 @@ const (
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
-// Random 创建随机字符串
+// RandomStr 创建随机字符串
 func RandomStr(n int) string {
 	sb := strings.Builder{}
 	sb.Grow(n)

@@ -1,0 +1,244 @@
+// Package cache RedisCache
+package cache
+
+import (
+	"context"
+
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/ickeep/yimoko-go/api"
+	"github.com/redis/go-redis/v9"
+	"github.com/samber/lo"
+)
+
+// RedisCache  实现 Cache 接口 RedisCache
+type RedisCache struct {
+	// redis 连接池
+	client *redis.Client
+	log    *log.Helper
+	// 缓存前缀
+	prefix string
+	// 空值
+	empty string
+}
+
+// NewRedisCache 创建 RedisCache
+func NewRedisCache(client *redis.Client, prefix string, logger log.Logger) *RedisCache {
+	if client == nil {
+		panic("redis client 不能为空")
+	}
+	return &RedisCache{
+		client: client,
+		prefix: prefix,
+		log:    log.NewHelper(logger),
+	}
+}
+
+// IsEmpty 判断缓存是否为空
+func (r *RedisCache) IsEmpty(value string) bool {
+	return value == r.empty
+}
+
+// Get 获取缓存
+func (r *RedisCache) Get(ctx context.Context, key string) (string, error) {
+	val, err := r.client.Get(ctx, r.prefix+key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return val, api.ErrorNotFound("缓存不存在")
+		}
+		r.log.Errorf("redis get key: %s error: %v", key, err)
+	}
+	return val, err
+}
+
+// MGet 批量获取缓存
+func (r *RedisCache) MGet(ctx context.Context, keys ...string) (map[string]string, error) {
+	if len(keys) == 0 {
+		return nil, api.ErrorBadRequest("参数错误")
+	}
+	return r.mGet(ctx, r.handleKeys(keys...)...)
+}
+
+// PrefixGet 前置匹配获取
+func (r *RedisCache) PrefixGet(ctx context.Context, prefix string, scanCount int64) (map[string]string, error) {
+	var cursor uint64
+	var keys []string
+	var err error
+	data := make(map[string]string)
+	for {
+		keys, cursor, err = r.client.Scan(ctx, cursor, r.prefix+prefix+"*", scanCount).Result()
+		if err != nil {
+			r.log.Errorf("redis scan prefix: %s error: %v", prefix, err)
+			return nil, api.ErrorInternalServerError("前置匹配获取缓存失败")
+		}
+		if len(keys) > 0 {
+			values, err := r.mGet(ctx, keys...)
+			if err != nil {
+				return nil, err
+			}
+			data = lo.Assign(data, values)
+		}
+		if cursor == 0 {
+			break
+		}
+	}
+	return data, nil
+}
+
+// Set 设置缓存
+func (r *RedisCache) Set(ctx context.Context, key string, val string) error {
+	err := r.client.Set(ctx, r.prefix+key, val, 0).Err()
+	// 判断错误类型 并转化成 api.Error
+	if err != nil {
+		r.log.Errorf("redis set key: %s error: %v", key, err)
+		return api.ErrorInternalServerError("设置缓存失败")
+	}
+	return nil
+}
+
+// MSet 批量设置缓存
+func (r *RedisCache) MSet(ctx context.Context, data map[string]string) error {
+	if len(data) == 0 {
+		return api.ErrorBadRequest("参数错误")
+	}
+	err := error(nil)
+	if r.prefix == "" {
+		err = r.client.MSet(ctx, data).Err()
+	} else {
+		// 处理 key
+		newData := lo.MapEntries(data, func(k string, v string) (string, string) {
+			return r.prefix + k, v
+		})
+		err = r.client.MSet(ctx, newData).Err()
+	}
+	if err != nil {
+		r.log.Errorf("redis mSet data: %v error: %v", data, err)
+		return api.ErrorInternalServerError("批量设置缓存失败")
+	}
+	return nil
+}
+
+// Del 删除缓存
+func (r *RedisCache) Del(ctx context.Context, key string) error {
+	err := r.client.Del(ctx, r.prefix+key).Err()
+	if err != nil {
+		r.log.Errorf("redis del key: %s error: %v", key, err)
+		return api.ErrorInternalServerError("删除缓存失败")
+	}
+	return nil
+}
+
+// MDel 批量删除缓存
+func (r *RedisCache) MDel(ctx context.Context, keys ...string) error {
+	return r.mDel(ctx, r.handleKeys(keys...)...)
+}
+
+// PrefixDel 前缀
+func (r *RedisCache) PrefixDel(ctx context.Context, prefix string, scanCount int64) error {
+	var cursor uint64
+	var keys []string
+	var err error
+	for {
+		keys, cursor, err = r.client.Scan(ctx, cursor, r.prefix+prefix+"*", scanCount).Result()
+		if err != nil {
+			r.log.Errorf("redis scan prefix: %s error: %v", prefix, err)
+			return api.ErrorInternalServerError("前置匹配删除缓存失败")
+		}
+		if len(keys) > 0 {
+			err = r.mDel(ctx, keys...)
+			if err != nil {
+				return err
+			}
+		}
+		if cursor == 0 {
+			break
+		}
+	}
+	return nil
+}
+
+// Clear 清空缓存
+func (r *RedisCache) Clear(ctx context.Context) error {
+	var cursor uint64
+	var keys []string
+	var err error
+	for {
+		keys, cursor, err = r.client.Scan(ctx, cursor, r.prefix+"*", 0).Result()
+		if err != nil {
+			r.log.Errorf("redis scan error: %v", err)
+			return api.ErrorInternalServerError("清空缓存失败")
+		}
+		if len(keys) > 0 {
+			err = r.mDel(ctx, keys...)
+			if err != nil {
+				return err
+			}
+		}
+		if cursor == 0 {
+			break
+		}
+	}
+	return nil
+}
+
+// Close 关闭缓存
+func (r *RedisCache) Close() error {
+	return r.client.Close()
+}
+
+// GetType 获取缓存类型
+func (r *RedisCache) GetType() string {
+	return "redis"
+}
+
+// 处理 keys 前缀
+func (r *RedisCache) handleKeys(keys ...string) []string {
+	if r.prefix == "" {
+		return keys
+	}
+	if len(keys) == 0 {
+		return nil
+	}
+	newKeys := make([]string, len(keys))
+	for i, key := range keys {
+		newKeys[i] = r.prefix + key
+	}
+	return newKeys
+}
+
+// mGet 批量获取缓存 不处理前缀
+func (r *RedisCache) mGet(ctx context.Context, keys ...string) (map[string]string, error) {
+	if len(keys) == 0 {
+		return nil, api.ErrorBadRequest("参数错误")
+	}
+	values, err := r.client.MGet(ctx, keys...).Result()
+	if err != nil {
+		r.log.Errorf("redis mGet keys: %v error: %v", keys, err)
+		return nil, api.ErrorInternalServerError("批量获取缓存失败")
+	}
+	strMap := make(map[string]string, len(keys))
+	for i, value := range values {
+		if value != nil {
+			if v, ok := value.(string); ok {
+				strMap[keys[i]] = v
+			} else {
+				strMap[keys[i]] = r.empty
+			}
+		} else {
+			strMap[keys[i]] = r.empty
+		}
+	}
+	return strMap, nil
+}
+
+// mDel 删除不处理前缀
+func (r *RedisCache) mDel(ctx context.Context, keys ...string) error {
+	if len(keys) == 0 {
+		return api.ErrorBadRequest("参数错误")
+	}
+	err := r.client.Del(ctx, keys...).Err()
+	if err != nil {
+		r.log.Errorf("redis mDel keys: %v error: %v", keys, err)
+		return api.ErrorInternalServerError("批量删除缓存失败")
+	}
+	return nil
+}

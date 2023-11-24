@@ -59,7 +59,7 @@ func UpdateDefaultConfig(conf *conf.Config, id string, name string, version stri
 }
 
 // LoadFileConf 加载文件配置
-func LoadFileConf(flagconf string) *conf.Config {
+func LoadFileConf(flagconf string) (config.Config, *conf.Config) {
 	c := config.New(config.WithSource(file.NewSource(flagconf)))
 	if err := c.Load(); err != nil {
 		panic(err)
@@ -68,5 +68,5 @@ func LoadFileConf(flagconf string) *conf.Config {
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
-	return &bc
+	return c, &bc
 }

@@ -13,7 +13,7 @@ import (
 )
 
 // NewApp http.Server 支持多个 可分别支持后台管理 API 和 BFF API
-func NewApp(logger log.Logger, conf *conf.Server, gs *grpc.Server, hss ...*http.Server) *kratos.App {
+func NewApp(logger log.Logger, conf *conf.Config, gs *grpc.Server, hss ...*http.Server) *kratos.App {
 	servers := []transport.Server{}
 	for _, s := range hss {
 		if s != nil {
@@ -26,10 +26,11 @@ func NewApp(logger log.Logger, conf *conf.Server, gs *grpc.Server, hss ...*http.
 	if len(servers) == 0 {
 		panic("请检查配置文件，至少保证启动 GRPC 或 HTTP 中的一个服务")
 	}
+	server := conf.Server
 	return kratos.New(
-		kratos.ID(conf.Id),
-		kratos.Name(conf.Name),
-		kratos.Version(conf.Version),
+		kratos.ID(server.Id),
+		kratos.Name(server.Name),
+		kratos.Version(server.Version),
 		kratos.Metadata(map[string]string{}),
 		kratos.Logger(logger),
 		kratos.Server(servers...),

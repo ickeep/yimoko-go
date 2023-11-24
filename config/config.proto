@@ -130,10 +130,12 @@ message Producer {
 
 // 日志配置
 message Logger {
-  string topicID = 1;
-  string accessKey = 2;
-  string accessSecret = 3;
-  string endpoint = 4;
+  // 服务商
+  string provider = 1;
+  string topicID = 2;
+  string accessKey = 3;
+  string accessSecret = 4;
+  string endpoint = 5;
 }
 
 message Trace {

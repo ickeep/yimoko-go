@@ -10,7 +10,25 @@ import (
 )
 
 // GetLogger _
-func GetLogger(service *config.Server, logger log.Logger) log.Logger {
+func GetLogger(conf *config.Config) log.Logger {
+	logger := conf.Logger
+	if logger == nil {
+		return GetStdLogger(conf)
+	}
+	if logger.Provider == "tencent" {
+		return GetTencentLogger(conf)
+	}
+	return GetStdLogger(conf)
+}
+
+// GetStdLogger _
+func GetStdLogger(conf *config.Config) log.Logger {
+	logger := log.NewStdLogger(os.Stdout)
+	return getLogger(conf.Server, logger)
+}
+
+// GetLogger _
+func getLogger(service *config.Server, logger log.Logger) log.Logger {
 	return log.With(logger,
 		"ts", log.DefaultTimestamp,
 		"caller", log.DefaultCaller,
@@ -20,10 +38,4 @@ func GetLogger(service *config.Server, logger log.Logger) log.Logger {
 		"trace_id", tracing.TraceID(),
 		"span_id", tracing.SpanID(),
 	)
-}
-
-// GetStdLogger _
-func GetStdLogger(conf *config.Config) log.Logger {
-	logger := log.NewStdLogger(os.Stdout)
-	return GetLogger(conf.Server, logger)
 }

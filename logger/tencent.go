@@ -19,7 +19,7 @@ func GetTencentLogger(conf *config.Config) log.Logger {
 	if err != nil {
 		panic(fmt.Sprintf("init tencent logger error: %v", err))
 	}
-	return GetLogger(conf.Server, logger)
+	return getLogger(conf.Server, logger)
 }
 
 // TencentLogger _

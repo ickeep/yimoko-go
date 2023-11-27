@@ -3,6 +3,7 @@ package cache
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/ickeep/yimoko-go/api"
@@ -85,9 +86,8 @@ func (r *RedisCache) PrefixGet(ctx context.Context, prefix string, scanCount int
 }
 
 // Set 设置缓存
-func (r *RedisCache) Set(ctx context.Context, key string, val string) error {
-	err := r.client.Set(ctx, r.prefix+key, val, 0).Err()
-	// 判断错误类型 并转化成 api.Error
+func (r *RedisCache) Set(ctx context.Context, key string, val string, expiration time.Duration) error {
+	err := r.client.Set(ctx, r.prefix+key, val, expiration).Err()
 	if err != nil {
 		r.log.Errorf("redis set key: %s error: %v", key, err)
 		return api.ErrorInternalServerError("设置缓存失败")
@@ -96,22 +96,44 @@ func (r *RedisCache) Set(ctx context.Context, key string, val string) error {
 }
 
 // MSet 批量设置缓存
-func (r *RedisCache) MSet(ctx context.Context, data map[string]string) error {
+func (r *RedisCache) MSet(ctx context.Context, data map[string]string, expiration time.Duration) error {
 	if len(data) == 0 {
 		return api.ErrorBadRequest("参数错误")
 	}
 	err := error(nil)
 	if r.prefix == "" {
-		err = r.client.MSet(ctx, data).Err()
+		err = r.client.MSet(ctx, data, expiration).Err()
 	} else {
 		// 处理 key
 		newData := lo.MapEntries(data, func(k string, v string) (string, string) {
 			return r.prefix + k, v
 		})
-		err = r.client.MSet(ctx, newData).Err()
+		err = r.client.MSet(ctx, newData, expiration).Err()
 	}
 	if err != nil {
 		r.log.Errorf("redis mSet data: %v error: %v", data, err)
+		return api.ErrorInternalServerError("批量设置缓存失败")
+	}
+	return nil
+}
+
+// SetEmpty 设置空值 防止缓存穿透
+func (r *RedisCache) SetEmpty(ctx context.Context, key string, expiration time.Duration) error {
+	return r.Set(ctx, r.prefix+key, r.empty, expiration)
+}
+
+// MSetEmpty 批量设置空值
+func (r *RedisCache) MSetEmpty(ctx context.Context, keys []string, expiration time.Duration) error {
+	if len(keys) == 0 {
+		return api.ErrorBadRequest("参数错误")
+	}
+	data := make(map[string]string, len(keys))
+	for _, key := range keys {
+		data[r.prefix+key] = r.empty
+	}
+	err := r.MSet(ctx, data, expiration)
+	if err != nil {
+		r.log.Errorf("redis mSet empty  error: %v", err)
 		return api.ErrorInternalServerError("批量设置缓存失败")
 	}
 	return nil
@@ -157,12 +179,12 @@ func (r *RedisCache) PrefixDel(ctx context.Context, prefix string, scanCount int
 }
 
 // Clear 清空缓存
-func (r *RedisCache) Clear(ctx context.Context) error {
+func (r *RedisCache) Clear(ctx context.Context, scanCount int64) error {
 	var cursor uint64
 	var keys []string
 	var err error
 	for {
-		keys, cursor, err = r.client.Scan(ctx, cursor, r.prefix+"*", 0).Result()
+		keys, cursor, err = r.client.Scan(ctx, cursor, r.prefix+"*", scanCount).Result()
 		if err != nil {
 			r.log.Errorf("redis scan error: %v", err)
 			return api.ErrorInternalServerError("清空缓存失败")
@@ -242,3 +264,15 @@ func (r *RedisCache) mDel(ctx context.Context, keys ...string) error {
 	}
 	return nil
 }
+
+// type Data struct {
+// 	cache Cache
+// }
+
+// func NewData(cache Cache) *Data {
+// 	return &Data{
+// 		cache: cache,
+// 	}
+// }
+
+// var redisData = NewData(&RedisCache{})

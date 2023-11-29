@@ -237,16 +237,12 @@ func (r *RedisCache) mGet(ctx context.Context, keys ...string) (map[string]strin
 		r.log.Errorf("redis mGet keys: %v error: %v", keys, err)
 		return nil, api.ErrorInternalServerError("批量获取缓存失败")
 	}
-	strMap := make(map[string]string, len(keys))
+	strMap := map[string]string{}
 	for i, value := range values {
 		if value != nil {
 			if v, ok := value.(string); ok {
 				strMap[keys[i]] = v
-			} else {
-				strMap[keys[i]] = r.empty
 			}
-		} else {
-			strMap[keys[i]] = r.empty
 		}
 	}
 	return strMap, nil

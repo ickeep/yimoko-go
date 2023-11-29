@@ -101,31 +101,11 @@ func (r *RedisCache) MSet(ctx context.Context, data map[string]string, expiratio
 	if length == 0 {
 		return api.ErrorBadRequest("参数错误")
 	}
-	if length <= 1000 {
-		err := error(nil)
-		if r.prefix == "" {
-			err = r.client.MSet(ctx, data, expiration).Err()
-		} else {
-			// 处理 key
-			newData := lo.MapEntries(data, func(k string, v string) (string, string) {
-				return r.prefix + k, v
-			})
-			err = r.client.MSet(ctx, newData, expiration).Err()
-		}
-		if err != nil {
-			r.log.Errorf("redis mSet data: %v error: %v", data, err)
-			return api.ErrorInternalServerError("批量设置缓存失败")
-		}
-		return nil
-	}
 	// 使用 pipeline 批量设置
 	pipe := r.client.Pipeline()
 	defer pipe.Discard()
 	for key, value := range data {
-		if r.prefix != "" {
-			key = r.prefix + key
-		}
-		pipe.Set(ctx, key, value, expiration)
+		pipe.Set(ctx, r.prefix+key, value, expiration)
 	}
 	_, err := pipe.Exec(ctx)
 	if err != nil {
@@ -145,16 +125,14 @@ func (r *RedisCache) MSetEmpty(ctx context.Context, keys []string, expiration ti
 	if len(keys) == 0 {
 		return api.ErrorBadRequest("参数错误")
 	}
-	data := make(map[string]string, len(keys))
+	// 使用 pipeline 批量设置
+	pipe := r.client.Pipeline()
+	defer pipe.Discard()
 	for _, key := range keys {
-		data[r.prefix+key] = r.empty
+		pipe.Set(ctx, r.prefix+key, r.empty, expiration)
 	}
-	err := r.MSet(ctx, data, expiration)
-	if err != nil {
-		r.log.Errorf("redis mSet empty  error: %v", err)
-		return api.ErrorInternalServerError("批量设置缓存失败")
-	}
-	return nil
+	_, err := pipe.Exec(ctx)
+	return err
 }
 
 // Del 删除缓存

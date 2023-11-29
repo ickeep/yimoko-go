@@ -97,21 +97,39 @@ func (r *RedisCache) Set(ctx context.Context, key string, val string, expiration
 
 // MSet 批量设置缓存
 func (r *RedisCache) MSet(ctx context.Context, data map[string]string, expiration time.Duration) error {
-	if len(data) == 0 {
+	length := len(data)
+	if length == 0 {
 		return api.ErrorBadRequest("参数错误")
 	}
-	err := error(nil)
-	if r.prefix == "" {
-		err = r.client.MSet(ctx, data, expiration).Err()
-	} else {
-		// 处理 key
-		newData := lo.MapEntries(data, func(k string, v string) (string, string) {
-			return r.prefix + k, v
-		})
-		err = r.client.MSet(ctx, newData, expiration).Err()
+	if length <= 1000 {
+		err := error(nil)
+		if r.prefix == "" {
+			err = r.client.MSet(ctx, data, expiration).Err()
+		} else {
+			// 处理 key
+			newData := lo.MapEntries(data, func(k string, v string) (string, string) {
+				return r.prefix + k, v
+			})
+			err = r.client.MSet(ctx, newData, expiration).Err()
+		}
+		if err != nil {
+			r.log.Errorf("redis mSet data: %v error: %v", data, err)
+			return api.ErrorInternalServerError("批量设置缓存失败")
+		}
+		return nil
 	}
+	// 使用 pipeline 批量设置
+	pipe := r.client.Pipeline()
+	defer pipe.Discard()
+	for key, value := range data {
+		if r.prefix != "" {
+			key = r.prefix + key
+		}
+		pipe.Set(ctx, key, value, expiration)
+	}
+	_, err := pipe.Exec(ctx)
 	if err != nil {
-		r.log.Errorf("redis mSet data: %v error: %v", data, err)
+		r.log.Errorf("redis pipe.Set data: %v error: %v", data, err)
 		return api.ErrorInternalServerError("批量设置缓存失败")
 	}
 	return nil
@@ -229,23 +247,47 @@ func (r *RedisCache) handleKeys(keys ...string) []string {
 
 // mGet 批量获取缓存 不处理前缀
 func (r *RedisCache) mGet(ctx context.Context, keys ...string) (map[string]string, error) {
-	if len(keys) == 0 {
+	length := len(keys)
+	if length == 0 {
 		return nil, api.ErrorBadRequest("参数错误")
 	}
-	values, err := r.client.MGet(ctx, keys...).Result()
-	if err != nil {
-		r.log.Errorf("redis mGet keys: %v error: %v", keys, err)
-		return nil, api.ErrorInternalServerError("批量获取缓存失败")
+	if length <= 1000 {
+		values, err := r.client.MGet(ctx, keys...).Result()
+		if err != nil {
+			r.log.Errorf("redis mGet keys: %v error: %v", keys, err)
+			return nil, api.ErrorInternalServerError("批量获取缓存失败")
+		}
+		strMap := map[string]string{}
+		for i, value := range values {
+			if value != nil {
+				if v, ok := value.(string); ok {
+					strMap[keys[i]] = v
+				}
+			}
+		}
+		return strMap, nil
 	}
-	strMap := map[string]string{}
-	for i, value := range values {
-		if value != nil {
-			if v, ok := value.(string); ok {
-				strMap[keys[i]] = v
+	// 分批获取
+	data := map[string]string{}
+	for i := 0; i < length; i += 1000 {
+		end := i + 1000
+		if end > length {
+			end = length
+		}
+		values, err := r.client.MGet(ctx, keys[i:end]...).Result()
+		if err != nil {
+			r.log.Errorf("redis mGet keys: %v error: %v", keys, err)
+			return nil, api.ErrorInternalServerError("批量获取缓存失败")
+		}
+		for j, value := range values {
+			if value != nil {
+				if v, ok := value.(string); ok {
+					data[keys[i+j]] = v
+				}
 			}
 		}
 	}
-	return strMap, nil
+	return data, nil
 }
 
 // mDel 删除不处理前缀

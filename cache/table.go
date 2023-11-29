@@ -154,6 +154,14 @@ func MSetTableCache[T comparable](ctx context.Context, t *Table, content *TableC
 	return mSetTableCache(ctx, t, content, cacheValues)
 }
 
+// DelTableCache 删除缓存
+func DelTableCache[T comparable](ctx context.Context, t *Table, content *TableContent[T], params ...T) error {
+	cacheKeys := lo.Map(params, func(item T, index int) string {
+		return content.GetKey(item)
+	})
+	return t.cache.MDel(ctx, cacheKeys...)
+}
+
 func mSetTableCache[T comparable](ctx context.Context, t *Table, content *TableContent[T], values map[T]string) error {
 	cacheValues := lo.MapKeys(values, func(value string, key T) string {
 		return content.GetKey(key)

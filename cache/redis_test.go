@@ -73,7 +73,7 @@ func TestRedisCache_MGet(t *testing.T) {
 	getValues, _ := cache.MGet(ctx, keys...)
 	mapValues := make(map[string]string, len(keys))
 	for i, key := range keys {
-		mapValues[cache.prefix+key] = values[i].(string)
+		mapValues[cache.prefix+key], _ = values[i].(string)
 	}
 	assert.Equal(t, mapValues, getValues, "Get values should be equal to 'test_value1' and 'test_value2'")
 }

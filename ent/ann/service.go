@@ -15,6 +15,8 @@ type Service struct {
 	ServiceType string `yaml:"serviceType"`
 	// proto 目录路径
 	ProtoPath string `yaml:"protoPath"`
+	// proto 的引用目录
+	ProtoImportPath string `yaml:"protoImportPath"`
 	// 权限配置的路径
 	PermissionsPath string `yaml:"permissionsPath"`
 	// 权限配置的父级ID
